@@ -95,35 +95,27 @@ const CameraMap: React.FC<CameraMapProps> = ({ cameras, isPinMode, onMapClick, o
 
       const marker = L.marker([cam.lat, cam.lng], { icon: customIcon });
 
-      const popupNode = L.DomUtil.create('div', 'p-2 min-w-[180px]');
-      popupNode.innerHTML = `
+      const container = L.DomUtil.create('div', 'p-2 min-w-[180px]');
+      container.innerHTML = `
         <div class="space-y-1.5">
           <div class="flex items-center space-x-2">
             <div class="w-2 h-2 rounded-full ${cam.status === CameraStatus.ONLINE ? 'bg-green-500' : 'bg-red-500'}"></div>
             <p class="font-bold text-slate-800 text-sm leading-tight">${cam.name}</p>
           </div>
           <p class="text-[10px] font-medium text-slate-500 leading-normal">${cam.address}</p>
-          <div class="pt-2">
-            <button id="view-btn-${cam.id}" class="w-full bg-indigo-600 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-indigo-700 active:scale-95 transition-all shadow-md flex items-center justify-center">
-              <i class="bi bi-play-circle-fill mr-1.5"></i> XEM TRỰC TIẾP
-            </button>
-          </div>
         </div>
       `;
-
-      marker.bindPopup(popupNode);
       
-      marker.on('popupopen', () => {
-        const btn = document.getElementById(`view-btn-${cam.id}`);
-        if (btn) {
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            onViewLive(cam.id);
-            marker.closePopup();
-          };
-        }
+      const btn = L.DomUtil.create('button', 'w-full bg-indigo-600 text-white text-[10px] font-bold py-2 mt-2 rounded-lg hover:bg-indigo-700 active:scale-95 transition-all shadow-md flex items-center justify-center', container);
+      btn.innerHTML = '<i class="bi bi-play-circle-fill mr-1.5"></i> XEM TRỰC TIẾP';
+
+      L.DomEvent.on(btn, 'click', (e: any) => {
+        L.DomEvent.stopPropagation(e);
+        onViewLive(cam.id);
+        marker.closePopup();
       });
 
+      marker.bindPopup(container);
       markersLayer.current.addLayer(marker);
     });
   }, [cameras, onViewLive]);
@@ -153,28 +145,18 @@ const CameraMap: React.FC<CameraMapProps> = ({ cameras, isPinMode, onMapClick, o
         
         const userMarker = L.marker([focusedCamera.lat, focusedCamera.lng], { icon: userIcon });
         
-        const userPopupNode = L.DomUtil.create('div', 'p-2 min-w-[150px]');
-        userPopupNode.innerHTML = `
-          <div class="text-center">
-            <button id="add-at-loc-btn" class="w-full bg-green-600 text-white text-[11px] font-bold py-2.5 px-4 rounded-xl hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center">
-              <i class="bi bi-plus-circle-fill mr-2"></i> THÊM CAMERA TẠI ĐÂY
-            </button>
-          </div>
-        `;
+        const userPopupNode = L.DomUtil.create('div', 'p-2 min-w-[150px] text-center');
+        const addBtn = L.DomUtil.create('button', 'w-full bg-green-600 text-white text-[11px] font-bold py-2.5 px-4 rounded-xl hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center', userPopupNode);
+        addBtn.innerHTML = '<i class="bi bi-plus-circle-fill mr-2"></i> THÊM CAMERA TẠI ĐÂY';
         
-        userMarker.bindPopup(userPopupNode);
-        userMarkerLayer.current.addLayer(userMarker);
-        
-        userMarker.on('popupopen', () => {
-          const btn = document.getElementById('add-at-loc-btn');
-          if (btn) {
-            btn.onclick = () => {
-              onMapClick(focusedCamera.lat, focusedCamera.lng);
-              userMarker.closePopup();
-            };
-          }
+        L.DomEvent.on(addBtn, 'click', (e: any) => {
+          L.DomEvent.stopPropagation(e);
+          onMapClick(focusedCamera.lat, focusedCamera.lng);
+          userMarker.closePopup();
         });
 
+        userMarker.bindPopup(userPopupNode);
+        userMarkerLayer.current.addLayer(userMarker);
         userMarker.openPopup();
       }
     }

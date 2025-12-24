@@ -149,8 +149,9 @@ const App: React.FC = () => {
       navigator.geolocation.getCurrentPosition(
         (p) => {
           const newPos = { lat: p.coords.latitude, lng: p.coords.longitude };
+          // Dùng timestamp để đảm bảo state thay đổi nếu nhấn liên tục
           setFocusedCamera({ 
-            id: 'USER_LOCATION', 
+            id: `USER_LOCATION_${Date.now()}`, 
             lat: newPos.lat, 
             lng: newPos.lng 
           } as any);
@@ -312,7 +313,7 @@ const App: React.FC = () => {
 
       {showSettingsModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2rem] w-full max-w-md p-6 sm:p-8 shadow-2xl animate-in zoom-in-95">
+          <div className="bg-white rounded-[2rem] w-full max-md:m-4 p-6 sm:p-8 shadow-2xl animate-in zoom-in-95">
             <h3 className="text-xl font-bold mb-6">Cloud Configuration</h3>
             <div className="space-y-4">
               <div>
