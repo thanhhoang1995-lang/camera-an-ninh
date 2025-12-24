@@ -128,36 +128,46 @@ const CameraMap: React.FC<CameraMapProps> = ({ cameras, isPinMode, onMapClick, o
         easeLinearity: 0.25
       });
 
-      // Nếu ID là USER_LOCATION, render một marker đặc biệt màu xanh dương
-      if (focusedCamera.id === 'USER_LOCATION' && userMarkerLayer.current) {
+      if (focusedCamera.id.startsWith('USER_LOCATION') && userMarkerLayer.current) {
         userMarkerLayer.current.clearLayers();
+        
+        // Modern Blue User Icon
         const userIcon = L.divIcon({
           html: `
-            <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-center;">
-              <div class="marker-pulse" style="background-color: rgba(59, 130, 246, 0.4);"></div>
-              <div style="background-color: #3b82f6; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); position: relative; z-index: 5;"></div>
+            <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+              <div class="marker-pulse" style="background-color: rgba(59, 130, 246, 0.5); animation-duration: 2s;"></div>
+              <div style="background-color: #3b82f6; width: 20px; height: 20px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); position: relative; z-index: 5;"></div>
             </div>
           `,
           className: 'user-marker-wrapper',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
+          iconSize: [40, 40],
+          iconAnchor: [20, 20]
         });
         
         const userMarker = L.marker([focusedCamera.lat, focusedCamera.lng], { icon: userIcon });
         
-        const userPopupNode = L.DomUtil.create('div', 'p-2 min-w-[150px] text-center');
-        const addBtn = L.DomUtil.create('button', 'w-full bg-green-600 text-white text-[11px] font-bold py-2.5 px-4 rounded-xl hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center', userPopupNode);
-        addBtn.innerHTML = '<i class="bi bi-plus-circle-fill mr-2"></i> THÊM CAMERA TẠI ĐÂY';
+        // Popup with clickable label
+        const userPopupNode = L.DomUtil.create('div', 'p-3 text-center');
+        const titleBtn = L.DomUtil.create('button', 'block w-full font-bold text-slate-800 text-sm mb-3 hover:text-indigo-600 transition-colors', userPopupNode);
+        titleBtn.innerHTML = '📍 Vị trí của bạn';
         
-        L.DomEvent.on(addBtn, 'click', (e: any) => {
+        const actionBtn = L.DomUtil.create('button', 'w-full bg-indigo-600 text-white text-[11px] font-bold py-2.5 px-4 rounded-xl hover:bg-indigo-700 active:scale-95 transition-all shadow-lg flex items-center justify-center', userPopupNode);
+        actionBtn.innerHTML = '<i class="bi bi-plus-circle-fill mr-2"></i> THÊM CAMERA TẠI ĐÂY';
+        
+        const handleAdd = (e: any) => {
           L.DomEvent.stopPropagation(e);
           onMapClick(focusedCamera.lat, focusedCamera.lng);
           userMarker.closePopup();
-        });
+        };
 
-        userMarker.bindPopup(userPopupNode);
+        L.DomEvent.on(titleBtn, 'click', handleAdd);
+        L.DomEvent.on(actionBtn, 'click', handleAdd);
+
+        userMarker.bindPopup(userPopupNode, { closeButton: false, className: 'user-location-popup' });
         userMarkerLayer.current.addLayer(userMarker);
-        userMarker.openPopup();
+        
+        // Automatically open popup to guide the user
+        setTimeout(() => userMarker.openPopup(), 1200);
       }
     }
   }, [focusedCamera, onMapClick]);
