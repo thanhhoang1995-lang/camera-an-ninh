@@ -1,0 +1,9 @@
+{
+  "name": "Copy of Copy of Phường Lâm Viên",
+  "description": "Hệ thống quản lý Camera an ninh thông minh.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
