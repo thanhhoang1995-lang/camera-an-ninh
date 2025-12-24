@@ -156,9 +156,22 @@ const App: React.FC = () => {
   const handleMyLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (p) => setFocusedCamera({ lat: p.coords.latitude, lng: p.coords.longitude } as any),
-        (err) => alert("Không thể lấy vị trí: " + err.message)
+        (p) => {
+          const newPos = { lat: p.coords.latitude, lng: p.coords.longitude };
+          // Sử dụng một ID giả để FlyTo có thể nhận diện thay đổi đối tượng
+          setFocusedCamera({ ...newPos, id: 'current_user_location' } as any);
+        },
+        (err) => {
+          let msg = "Không thể lấy vị trí.";
+          if (err.code === 1) msg = "Vui lòng cho phép quyền truy cập vị trí trên trình duyệt.";
+          if (err.code === 2) msg = "Vị trí không khả dụng (GPS yếu hoặc mất mạng).";
+          if (err.code === 3) msg = "Hết thời gian chờ lấy vị trí.";
+          alert(msg);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
+    } else {
+      alert("Trình duyệt của bạn không hỗ trợ định vị GPS.");
     }
   };
 
@@ -254,9 +267,6 @@ const App: React.FC = () => {
             </button>
             <button onClick={handleMyLocation} className="p-3.5 bg-white text-slate-700 rounded-2xl shadow-lg border border-slate-200 transition-all active:scale-95" title="Vị trí của tôi">
               <i className="bi bi-crosshair text-lg"></i>
-            </button>
-            <button onClick={checkStatuses} className="p-3.5 bg-white text-slate-700 rounded-2xl shadow-lg border border-slate-200 transition-all" title="Làm mới">
-              <i className={`bi bi-arrow-clockwise text-lg ${cameras.some(c => c.isChecking) ? 'animate-spin' : ''}`}></i>
             </button>
           </div>
           

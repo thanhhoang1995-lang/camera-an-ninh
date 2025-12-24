@@ -69,13 +69,14 @@ const CameraTable: React.FC<CameraTableProps> = ({ cameras, onEdit, onDelete, on
                 <td className="px-4 py-3 text-right space-x-1">
                   <button 
                     onClick={(e) => { e.stopPropagation(); onEdit(cam); }}
-                    className="text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50 transition-colors"
+                    className="text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50 transition-colors inline-flex"
                   >
                     <i className="bi bi-pencil-square"></i>
                   </button>
+                  {/* Nút xóa chỉ hiển thị trên máy tính (màn hình md trở lên) */}
                   <button 
                     onClick={(e) => { e.stopPropagation(); onDelete(cam.id); }}
-                    className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                    className="hidden md:inline-flex text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
                   >
                     <i className="bi bi-trash"></i>
                   </button>
