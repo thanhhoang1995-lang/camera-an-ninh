@@ -17,6 +17,7 @@ const CameraMap: React.FC<CameraMapProps> = ({ cameras, isPinMode, onMapClick, o
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
   const markersLayer = useRef<any>(null);
+  const userMarkerLayer = useRef<any>(null);
 
   // Initialize Map
   useEffect(() => {
@@ -29,7 +30,7 @@ const CameraMap: React.FC<CameraMapProps> = ({ cameras, isPinMode, onMapClick, o
         markerZoomAnimation: true
       }).setView([11.9404, 108.4583], 14);
 
-      // Enhanced Google Maps Tiles URL (h = roads only, m = standard roadmap, s = satellite, y = hybrid)
+      // Enhanced Google Maps Tiles URL
       L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -40,11 +41,11 @@ const CameraMap: React.FC<CameraMapProps> = ({ cameras, isPinMode, onMapClick, o
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
       markersLayer.current = L.layerGroup().addTo(map);
+      userMarkerLayer.current = L.layerGroup().addTo(map);
       mapInstance.current = map;
 
       // Click handling
       map.on('click', (e: any) => {
-        // Use a window event to pass click data to App.tsx when in Pin Mode
         window.dispatchEvent(new CustomEvent('leaflet-map-clicked', { 
           detail: { lat: e.latlng.lat, lng: e.latlng.lng } 
         }));
@@ -82,7 +83,7 @@ const CameraMap: React.FC<CameraMapProps> = ({ cameras, isPinMode, onMapClick, o
       
       const customIcon = L.divIcon({
         html: `
-          <div style="position: relative; width: 24px; height: 24px; display: flex; items-center; justify-center;">
+          <div style="position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
             <div class="marker-pulse" style="background-color: ${shadowColor};"></div>
             <div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); position: relative; z-index: 2;"></div>
           </div>
@@ -103,7 +104,7 @@ const CameraMap: React.FC<CameraMapProps> = ({ cameras, isPinMode, onMapClick, o
           </div>
           <p class="text-[10px] font-medium text-slate-500 leading-normal">${cam.address}</p>
           <div class="pt-2">
-            <button id="view-btn-${cam.id}" class="w-full bg-indigo-600 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-indigo-700 active:scale-95 transition-all shadow-md shadow-indigo-100 flex items-center justify-center">
+            <button id="view-btn-${cam.id}" class="w-full bg-indigo-600 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-indigo-700 active:scale-95 transition-all shadow-md flex items-center justify-center">
               <i class="bi bi-play-circle-fill mr-1.5"></i> XEM TRỰC TIẾP
             </button>
           </div>
@@ -127,13 +128,34 @@ const CameraMap: React.FC<CameraMapProps> = ({ cameras, isPinMode, onMapClick, o
     });
   }, [cameras, onViewLive]);
 
-  // Focus Map with smooth transition
+  // Focus Map with smooth transition and User Marker
   useEffect(() => {
     if (focusedCamera && mapInstance.current) {
       mapInstance.current.flyTo([focusedCamera.lat, focusedCamera.lng], 17, {
         duration: 1.25,
         easeLinearity: 0.25
       });
+
+      // Nếu ID là USER_LOCATION, render một marker đặc biệt màu xanh dương
+      if (focusedCamera.id === 'USER_LOCATION' && userMarkerLayer.current) {
+        userMarkerLayer.current.clearLayers();
+        const userIcon = L.divIcon({
+          html: `
+            <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-center;">
+              <div class="marker-pulse" style="background-color: rgba(59, 130, 246, 0.4);"></div>
+              <div style="background-color: #3b82f6; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); position: relative; z-index: 5;"></div>
+            </div>
+          `,
+          className: 'user-marker-wrapper',
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        });
+        
+        const userMarker = L.marker([focusedCamera.lat, focusedCamera.lng], { icon: userIcon });
+        userMarker.bindPopup('<p class="font-bold text-center text-xs p-1">Vị trí của bạn</p>');
+        userMarkerLayer.current.addLayer(userMarker);
+        userMarker.openPopup();
+      }
     }
   }, [focusedCamera]);
 

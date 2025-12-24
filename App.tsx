@@ -3,10 +3,9 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import CameraMap from './components/CameraMap';
 import CameraTable from './components/CameraTable';
 import StatsCard from './components/StatsCard';
-import { Camera, CameraStatus, GitHubSettings, ChatMessage } from './types';
+import { Camera, CameraStatus, GitHubSettings } from './types';
 import { STORAGE_KEYS } from './constants';
 import { syncCamerasWithGitHub } from './services/githubService';
-import { getGeminiResponse } from './services/geminiService';
 
 const App: React.FC = () => {
   const [cameras, setCameras] = useState<Camera[]>([]);
@@ -19,14 +18,7 @@ const App: React.FC = () => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastGlobalCheck, setLastGlobalCheck] = useState<number>(Date.now());
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-
-  // Chatbot state
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState('');
-  const [isChatLoading, setIsChatLoading] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Settings state
   const [ghSettings, setGhSettings] = useState<GitHubSettings>(() => {
@@ -77,7 +69,6 @@ const App: React.FC = () => {
         return c;
       }));
     }
-    setLastGlobalCheck(Date.now());
   }, []);
 
   useEffect(() => {
@@ -158,20 +149,26 @@ const App: React.FC = () => {
       navigator.geolocation.getCurrentPosition(
         (p) => {
           const newPos = { lat: p.coords.latitude, lng: p.coords.longitude };
-          // Sử dụng một ID giả để FlyTo có thể nhận diện thay đổi đối tượng
-          setFocusedCamera({ ...newPos, id: 'current_user_location' } as any);
+          // Gửi một "Camera ảo" đại diện cho người dùng để Map render marker
+          setFocusedCamera({ 
+            id: 'USER_LOCATION', 
+            name: 'Vị trí của bạn', 
+            address: 'Hiện tại', 
+            lat: newPos.lat, 
+            lng: newPos.lng 
+          } as any);
         },
         (err) => {
           let msg = "Không thể lấy vị trí.";
-          if (err.code === 1) msg = "Vui lòng cho phép quyền truy cập vị trí trên trình duyệt.";
-          if (err.code === 2) msg = "Vị trí không khả dụng (GPS yếu hoặc mất mạng).";
-          if (err.code === 3) msg = "Hết thời gian chờ lấy vị trí.";
+          if (err.code === 1) msg = "Vui lòng cho phép quyền truy cập vị trí trong cài đặt trình duyệt.";
+          else if (err.code === 2) msg = "Vị trí không khả dụng.";
+          else if (err.code === 3) msg = "Hết thời gian chờ lấy vị trí.";
           alert(msg);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
-      alert("Trình duyệt của bạn không hỗ trợ định vị GPS.");
+      alert("Trình duyệt không hỗ trợ định vị.");
     }
   };
 
@@ -191,18 +188,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleChatSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim() || isChatLoading) return;
-    const userMsg = chatInput.trim();
-    setChatInput('');
-    setChatMessages(prev => [...prev, { role: 'user', parts: [{ text: userMsg }] }]);
-    setIsChatLoading(true);
-    const aiRes = await getGeminiResponse(userMsg, cameras);
-    setChatMessages(prev => [...prev, { role: 'model', parts: [{ text: aiRes.text }], sources: aiRes.sources }]);
-    setIsChatLoading(false);
-  };
-
   if (isInitialLoad) {
     return (
       <div className="fixed inset-0 bg-white flex items-center justify-center z-[5000]">
@@ -216,7 +201,6 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
-      {/* Header Optimized for Netlify/PWA */}
       <header className="glass-effect sticky top-0 z-[1001] border-b border-slate-200 px-4 py-3 safe-top">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -224,8 +208,8 @@ const App: React.FC = () => {
               <i className="bi bi-camera-reels-fill text-xl"></i>
             </div>
             <div>
-              <h1 className="font-bold text-slate-900 text-base leading-none">CamWatch Pro</h1>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Lâm Viên System</span>
+              <h1 className="font-bold text-slate-900 text-base leading-none">Hệ thống camera</h1>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Lâm Viên - Đà Lạt</span>
             </div>
           </div>
 
@@ -246,7 +230,6 @@ const App: React.FC = () => {
       </header>
 
       <main className="flex-1 container mx-auto p-4 lg:p-6 space-y-6 max-w-7xl">
-        {/* Stats Grid - 2 columns on mobile for Online/Offline */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
           <div className="col-span-2 md:col-span-1">
             <StatsCard label="Tổng thiết bị" value={stats.total} icon="bi-cpu" colorClass="text-indigo-600 border-indigo-100 bg-white" />
@@ -255,7 +238,6 @@ const App: React.FC = () => {
           <StatsCard label="Ngoại tuyến" value={stats.offline} icon="bi-wifi-off" colorClass="text-red-600 border-red-100 bg-white" />
         </div>
 
-        {/* Map Section */}
         <section className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden h-[450px] md:h-[600px] relative">
           <div className="absolute top-4 right-4 z-[1000] flex flex-col space-y-2">
             <button 
@@ -285,7 +267,6 @@ const App: React.FC = () => {
           />
         </section>
 
-        {/* Content Section */}
         <section className="space-y-4">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex-1 relative group">
@@ -332,70 +313,6 @@ const App: React.FC = () => {
         </section>
       </main>
 
-      {/* Mobile Chat FAB */}
-      <button 
-        onClick={() => setIsChatOpen(!isChatOpen)}
-        className="fixed bottom-6 right-6 bg-indigo-600 text-white w-14 h-14 rounded-2xl shadow-xl z-[1002] active:scale-90 transition-all flex items-center justify-center"
-      >
-        <i className={`bi ${isChatOpen ? 'bi-x-lg' : 'bi-chat-dots-fill'} text-2xl`}></i>
-      </button>
-
-      {/* Chat Assistant */}
-      {isChatOpen && (
-        <div className="fixed inset-x-4 bottom-24 sm:inset-auto sm:bottom-24 sm:right-6 sm:w-96 h-[500px] sm:h-[600px] bg-white rounded-[2rem] shadow-2xl border border-slate-200 z-[1002] flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
-          <div className="bg-indigo-600 p-4 text-white flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <i className="bi bi-stars text-xl"></i>
-              </div>
-              <span className="font-bold text-sm">Hỗ trợ Phường Lâm Viên</span>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-slate-50/50">
-            {chatMessages.length === 0 && (
-              <div className="text-center py-10 opacity-50">
-                <i className="bi bi-chat-heart text-4xl mb-2 block"></i>
-                <p className="text-sm">Hỏi tôi bất cứ điều gì về camera!</p>
-              </div>
-            )}
-            {chatMessages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-4 rounded-2xl text-sm shadow-sm ${m.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-200'}`}>
-                  {m.parts[0].text}
-                  {m.sources && m.sources.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-slate-100 flex flex-wrap gap-1">
-                      {m.sources.map((s, idx) => (
-                        <a key={idx} href={s.uri} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-slate-100 text-indigo-600 px-2 py-1 rounded">Nguồn {idx + 1}</a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            {isChatLoading && (
-              <div className="flex space-x-1.5 p-4 bg-white rounded-2xl border border-slate-200 w-fit">
-                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
-                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
-              </div>
-            )}
-          </div>
-          <form onSubmit={handleChatSubmit} className="p-3 bg-white border-t border-slate-100 flex gap-2">
-            <input 
-              type="text" 
-              placeholder="Nhập câu hỏi..." 
-              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-            />
-            <button type="submit" className="bg-indigo-600 text-white w-11 h-11 rounded-xl flex items-center justify-center hover:bg-indigo-700 transition-all">
-              <i className="bi bi-send-fill text-lg"></i>
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Modals are kept similar to previous version for consistency */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
           <div className="bg-white rounded-[2rem] w-full max-w-md p-6 sm:p-8 shadow-2xl animate-in zoom-in-95">
@@ -403,11 +320,11 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">GitHub Personal Token</label>
-                <input type="password" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" value={ghSettings.token} onChange={(e) => setGhSettings(prev => ({ ...prev, token: e.target.value }))} />
+                <input type="password" placeholder="ghp_..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" value={ghSettings.token} onChange={(e) => setGhSettings(prev => ({ ...prev, token: e.target.value }))} />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">Gist ID</label>
-                <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" value={ghSettings.gistId} onChange={(e) => setGhSettings(prev => ({ ...prev, gistId: e.target.value }))} />
+                <input type="text" placeholder="Gist ID" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" value={ghSettings.gistId} onChange={(e) => setGhSettings(prev => ({ ...prev, gistId: e.target.value }))} />
               </div>
               <div className="pt-4 flex gap-3">
                 <button onClick={() => { localStorage.setItem(STORAGE_KEYS.GITHUB_SETTINGS, JSON.stringify(ghSettings)); setShowSettingsModal(false); }} className="flex-1 bg-indigo-600 text-white py-3.5 rounded-xl font-bold">Lưu cài đặt</button>
@@ -495,7 +412,6 @@ const App: React.FC = () => {
       )}
 
       <footer className="mt-auto py-10 px-4 border-t border-slate-200 text-center safe-bottom">
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1.5">CamWatch Pro V3.1 - Netlify Ready</p>
         <p className="text-slate-300 text-[10px] font-medium">Hệ thống camera giám sát đô thị thông minh Lâm Viên - Đà Lạt © 2025.</p>
       </footer>
     </div>
