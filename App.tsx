@@ -109,7 +109,7 @@ const App: React.FC = () => {
       id: `cam_${Date.now()}`,
       name: `Camera mới #${cameras.filter(c => !c.deleted).length + 1}`,
       ip: '192.168.1.xxx',
-      address: `Vị trí thủ công (Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)})`,
+      address: `Vị trí lắp đặt (Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)})`,
       lat,
       lng,
       status: CameraStatus.ONLINE,
@@ -149,11 +149,8 @@ const App: React.FC = () => {
       navigator.geolocation.getCurrentPosition(
         (p) => {
           const newPos = { lat: p.coords.latitude, lng: p.coords.longitude };
-          // Gửi một "Camera ảo" đại diện cho người dùng để Map render marker
           setFocusedCamera({ 
             id: 'USER_LOCATION', 
-            name: 'Vị trí của bạn', 
-            address: 'Hiện tại', 
             lat: newPos.lat, 
             lng: newPos.lng 
           } as any);

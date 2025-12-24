@@ -156,9 +156,8 @@ const CameraMap: React.FC<CameraMapProps> = ({ cameras, isPinMode, onMapClick, o
         const userPopupNode = L.DomUtil.create('div', 'p-2 min-w-[150px]');
         userPopupNode.innerHTML = `
           <div class="text-center">
-            <p class="font-bold text-slate-800 text-xs mb-2">Vị trí của bạn</p>
-            <button id="add-at-loc-btn" class="w-full bg-green-600 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-green-700 active:scale-95 transition-all shadow-md">
-              <i class="bi bi-plus-circle-fill mr-1"></i> THÊM CAMERA TẠI ĐÂY
+            <button id="add-at-loc-btn" class="w-full bg-green-600 text-white text-[11px] font-bold py-2.5 px-4 rounded-xl hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center">
+              <i class="bi bi-plus-circle-fill mr-2"></i> THÊM CAMERA TẠI ĐÂY
             </button>
           </div>
         `;
