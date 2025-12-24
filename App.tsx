@@ -496,7 +496,7 @@ const App: React.FC = () => {
 
       <footer className="mt-auto py-10 px-4 border-t border-slate-200 text-center safe-bottom">
         <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1.5">CamWatch Pro V3.1 - Netlify Ready</p>
-        <p className="text-slate-300 text-[10px] font-medium">Hệ thống giám sát đô thị thông minh Đà Lạt © 2025.</p>
+        <p className="text-slate-300 text-[10px] font-medium">Hệ thống camera giám sát đô thị thông minh Lâm Viên - Đà Lạt © 2025.</p>
       </footer>
     </div>
   );
