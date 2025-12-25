@@ -1,44 +1,35 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { Camera } from "../types";
 
-export const getGeminiResponse = async (prompt: string, cameraData: Camera[]) => {
-  // Always use process.env.API_KEY directly and instantiate before call per guidelines.
+export const analyzeSystemSecurity = async (cameraData: Camera[]) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  const systemInstruction = `
-    Bạn là chuyên gia quản lý hệ thống camera giám sát của Phường Lâm Viên, Đà Lạt.
-    Dữ liệu camera hiện tại: ${JSON.stringify(cameraData.filter(c => !c.deleted))}.
-    Hãy hỗ trợ người dùng giải đáp các thắc mắc về tình trạng hệ thống, vị trí camera hoặc các thông tin liên quan đến an ninh.
-    Sử dụng Google Search nếu người dùng hỏi về thời tiết, sự kiện hoặc tin tức mới nhất tại Đà Lạt.
-    Luôn trả lời bằng tiếng Việt, thân thiện và chuyên nghiệp.
+  const activeCameras = cameraData.filter(c => !c.deleted);
+  const prompt = `
+    Dựa trên danh sách camera sau tại Phường Lâm Viên, Đà Lạt:
+    ${JSON.stringify(activeCameras.map(c => ({ name: c.name, address: c.address, status: c.status })))}
+    
+    Hãy thực hiện:
+    1. Đánh giá độ phủ sóng an ninh hiện tại.
+    2. Chỉ ra các "điểm mù" hoặc khu vực trọng điểm có thể đang thiếu sự giám sát (ví dụ: các ngõ nhỏ, khu vực công viên, hoặc chợ).
+    3. Gợi ý 3 vị trí cụ thể cần lắp thêm camera để tối ưu hóa an ninh.
+    
+    Trả lời bằng tiếng Việt, định dạng Markdown chuyên nghiệp, có các tiêu mục rõ ràng.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
-        systemInstruction,
-        tools: [{ googleSearch: {} }],
-      },
+        thinkingConfig: { thinkingBudget: 2000 }
+      }
     });
 
-    // Extracting grounding URLs as required when using googleSearch tool.
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
-      ?.map((chunk: any) => chunk.web)
-      .filter((web: any) => web && web.uri)
-      .map((web: any) => ({
-        uri: web.uri,
-        title: web.title || web.uri
-      })) || [];
-
-    return {
-      text: response.text || "Xin lỗi, tôi không thể xử lý yêu cầu này lúc này.",
-      sources
-    };
+    return response.text;
   } catch (error) {
-    console.error("Gemini Error:", error);
-    return { text: "Có lỗi xảy ra khi kết nối với AI.", sources: [] };
+    console.error("Gemini Security Analysis Error:", error);
+    return "Không thể thực hiện phân tích AI lúc này. Vui lòng kiểm tra lại kết nối mạng.";
   }
 };
