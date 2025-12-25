@@ -200,8 +200,8 @@ const App: React.FC = () => {
               <i className="bi bi-camera-reels-fill text-xl"></i>
             </div>
             <div className="hidden sm:block">
-              <h1 className={`font-bold ${viewMode === 'multiview' ? 'text-white' : 'text-slate-900'} text-base leading-none transition-colors`}>Hệ thống camera</h1>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Lâm Viên - Đà Lạt</span>
+              <h1 className={`font-bold ${viewMode === 'multiview' ? 'text-white' : 'text-slate-900'} text-base leading-none transition-colors`}>Hệ thống Camera giám sát</h1>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Phường Lâm Viên - Đà Lạt</span>
             </div>
           </div>
 
@@ -477,7 +477,7 @@ const App: React.FC = () => {
       )}
 
       <footer className={`mt-auto py-10 px-4 border-t ${viewMode === 'multiview' ? 'border-white/5 text-slate-600' : 'border-slate-200 text-slate-300'} text-center safe-bottom transition-colors`}>
-        <p className="text-[10px] font-medium uppercase tracking-[0.2em]">Hệ thống camera giám sát đô thị thông minh Lâm Viên - Đà Lạt © 2025.</p>
+        <p className="text-[10px] font-medium uppercase tracking-[0.2em]">Hệ thống camera giám sát đô thị thông minh Lâm Viên - Đà Lạt © 2026.</p>
       </footer>
     </div>
   );
