@@ -4,11 +4,6 @@ export enum CameraStatus {
   OFFLINE = 'offline'
 }
 
-export interface UptimePoint {
-  timestamp: number;
-  status: CameraStatus;
-}
-
 export interface Camera {
   id: string;
   name: string;
@@ -22,7 +17,6 @@ export interface Camera {
   lastCheckAt?: number;
   isChecking?: boolean;
   deleted?: boolean;
-  uptimeHistory?: UptimePoint[];
 }
 
 export interface GitHubSettings {

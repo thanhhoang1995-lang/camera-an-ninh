@@ -10,6 +10,11 @@ interface CameraTableProps {
 }
 
 const CameraTable: React.FC<CameraTableProps> = ({ cameras, onEdit, onDelete, onFocus }) => {
+  const formatTime = (ts?: number) => {
+    if (!ts) return 'Chưa kiểm tra';
+    return new Date(ts).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-slate-200 bg-white text-sm">
@@ -17,8 +22,8 @@ const CameraTable: React.FC<CameraTableProps> = ({ cameras, onEdit, onDelete, on
           <tr>
             <th className="px-4 py-4 text-left font-bold text-slate-500 uppercase tracking-widest text-[10px]">Tên thiết bị</th>
             <th className="px-4 py-4 text-left font-bold text-slate-500 uppercase tracking-widest text-[10px]">Địa chỉ IP</th>
-            <th className="px-4 py-4 text-left font-bold text-slate-500 uppercase tracking-widest text-[10px] hidden md:table-cell text-center">Độ ổn định (24h)</th>
-            <th className="px-4 py-4 text-left font-bold text-slate-500 uppercase tracking-widest text-[10px]">Trạng thái</th>
+            <th className="px-4 py-4 text-left font-bold text-slate-500 uppercase tracking-widest text-[10px] hidden md:table-cell">Trạng thái</th>
+            <th className="px-4 py-4 text-left font-bold text-slate-500 uppercase tracking-widest text-[10px] hidden lg:table-cell">Kiểm tra cuối</th>
             <th className="px-4 py-4 text-right font-bold text-slate-500 uppercase tracking-widest text-[10px]">Hành động</th>
           </tr>
         </thead>
@@ -46,17 +51,6 @@ const CameraTable: React.FC<CameraTableProps> = ({ cameras, onEdit, onDelete, on
                   </span>
                 </td>
                 <td className="px-4 py-4 hidden md:table-cell">
-                  <div className="flex items-center justify-center space-x-0.5 h-6">
-                    {cam.uptimeHistory?.slice(-20).map((point, idx) => (
-                      <div 
-                        key={idx}
-                        title={`${new Date(point.timestamp).toLocaleString()} - ${point.status}`}
-                        className={`w-1.5 h-full rounded-full transition-transform hover:scale-125 ${point.status === CameraStatus.ONLINE ? 'bg-green-400' : 'bg-red-400 opacity-60'}`}
-                      />
-                    )) || <span className="text-[10px] text-slate-300 italic">Chưa có dữ liệu</span>}
-                  </div>
-                </td>
-                <td className="px-4 py-4">
                   {cam.isChecking ? (
                     <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-500 animate-pulse">
                       <i className="bi bi-arrow-repeat animate-spin mr-1.5"></i>
@@ -75,18 +69,19 @@ const CameraTable: React.FC<CameraTableProps> = ({ cameras, onEdit, onDelete, on
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-4 text-right space-x-1">
+                <td className="px-4 py-4 text-slate-500 hidden lg:table-cell text-[11px] font-medium">
+                  {formatTime(cam.lastCheckAt)}
+                </td>
+                <td className="px-4 py-4 text-right space-x-1 whitespace-nowrap">
                   <button 
                     onClick={(e) => { e.stopPropagation(); onEdit(cam); }}
                     className="text-indigo-600 hover:bg-indigo-600 hover:text-white p-2 rounded-xl transition-all inline-flex"
-                    title="Chỉnh sửa"
                   >
                     <i className="bi bi-pencil-square"></i>
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); onDelete(cam.id); }}
                     className="hidden md:inline-flex text-slate-400 hover:bg-red-500 hover:text-white p-2 rounded-xl transition-all"
-                    title="Xóa"
                   >
                     <i className="bi bi-trash"></i>
                   </button>
